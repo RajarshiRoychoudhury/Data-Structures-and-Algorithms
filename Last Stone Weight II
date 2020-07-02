@@ -1,0 +1,83 @@
+Problem: https://leetcode.com/problems/last-stone-weight-ii/
+
+We have a collection of rocks, each rock has a positive integer weight.
+
+Each turn, we choose any two rocks and smash them together.  Suppose the stones have weights x and y with x <= y.  The result of this smash is:
+
+If x == y, both stones are totally destroyed;
+If x != y, the stone of weight x is totally destroyed, and the stone of weight y has new weight y-x.
+At the end, there is at most 1 stone left.  Return the smallest possible weight of this stone (the weight is 0 if there are no stones left.)
+
+ 
+
+Example 1:
+
+Input: [2,7,4,1,8,1]
+Output: 1
+Explanation: 
+We can combine 2 and 4 to get 2 so the array converts to [2,7,1,8,1] then,
+we can combine 7 and 8 to get 1 so the array converts to [2,1,1,1] then,
+we can combine 2 and 1 to get 1 so the array converts to [1,1,1] then,
+we can combine 1 and 1 to get 0 so the array converts to [1] then that's the optimal value.
+
+
+Solution:
+Approach 1
+From the understanding of the problem, the brute force approach would be to sort the array and destroy immediate values, and repeat the same for the remaining array.\\
+But this does not guarantee the correct solution, as the order in which they will be destroyed also matters.
+If we consider the array [2,7,4,1,8,1] , the steps of the mentioned approach will yield:
+Step 1:
+(Sort) [1,1,2,4,7,8]
+Step 2: [2,4,7,8] (Destroy 1 and 1)
+Step 3: [2,7,8] (Destroy 2,4)
+Step 4: [5,8] (Destroy 2,7)
+Step 5: [3] (Destroy 5,8)
+
+This seems to yield the wrong answer. This is because the answer would also be dependent on which order it is destroyed.
+
+Approach 2:
+Dynamic Programming[Partitioning Subset] 
+This method is dependent on the theory https://en.wikipedia.org/wiki/Partition_of_a_set
+The solution can be thought like this: the stone array can be partitioned into two subparts such that each stones in one subpart can be used to destroy or be destroyed by 
+the other stone in the other subpart, leaving behind 1 or 0 stones, whose weight will be the lowest weight. So, we would have to partition the subsets such that the difference 
+of the total sum of the 2 parts is minimum, and the difference will give the minimum weight.
+
+The best case would be that both the sums are equal, so sum of each part is sum(array)/2. But this is the ideal case. Hence we will have to find the number(i) closest to 
+sum(array)/2 for which the array can be partitoned into 2 equal parts, leaving behind sum(array)/2-i as the minimum weight left behind.
+
+The C++ Solution is 
+```
+class Solution {
+public:  
+    bool partition_set(vector<int> nums,int target)
+    {
+        vector<bool>dp(target+1,false);
+        int i,j;
+        dp[0]=true;
+        for(i=0;i<nums.size();i++)
+        {
+            for(j=target;j>=nums[i];j--)
+            {
+                dp[j]=dp[j]||dp[j-nums[i]];
+            }
+        }
+        return dp[target];
+    }
+    int lastStoneWeightII(vector<int>& stones) {
+        int sum=0;
+        for(int a:stones)
+        {
+            sum+=a;
+        }
+        int i;
+        for(i=sum;i>=0;i--)
+        {
+            if(i%2==0 && partition_set(stones,i/2))
+            {
+                return sum-i;
+            }
+        }
+        return sum;
+    }
+};
+```
